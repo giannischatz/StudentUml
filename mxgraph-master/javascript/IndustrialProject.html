@@ -1,0 +1,109 @@
+<!--
+  Copyright (c) 2006-2018, JGraph Ltd
+
+  Hello, World! example for mxGraph. This example demonstrates using
+  a DOM node to create a graph and adding vertices and edges.
+-->
+<html>
+<head>
+	<title>Industrial Project</title>
+
+	<!-- Sets the basepath for the library if not in same directory -->
+	<script type="text/javascript">
+		mxBasePath = 'src';
+	</script>
+
+	<!-- Loads and initializes the library -->
+	<script type="text/javascript" src="src/js/mxClient.js"></script>
+
+	<!-- Example code -->
+	<script id="work" type="text/javascript">
+
+		function main(container)
+		{
+
+			if (!mxClient.isBrowserSupported())
+			{
+				mxUtils.error('Browser is not supported!', 200, false);
+			}
+			else
+			{
+				console.log('it is here - else part');
+				mxEvent.disableContextMenu(container);
+
+				var graph = new mxGraph(container);
+
+				new mxRubberband(graph);
+
+				var parent = graph.getDefaultParent();
+
+				graph.getModel().beginUpdate();
+				try
+				{
+					console.log('trying');
+					var v1 = graph.insertVertex(parent, null, 'Hello,', 20, 20, 80, 30);
+					var v2 = graph.insertVertex(parent, null, 'World!', 200, 150, 80, 30);
+					var e1 = graph.insertEdge(parent, null, '', v1, v2);
+				}
+				finally
+				{
+					console.log('eded.');
+					graph.getModel().endUpdate();
+				}
+			}
+		};
+
+
+	</script>
+
+	<style>
+		.firstc {
+			position:relative;
+			overflow:hidden;
+			width:321px;
+			height:241px;
+			background:url('examples/editors/images/grid.gif');
+			cursor:default;
+		}
+	</style>
+</head>
+
+<!-- Page passes the container for the graph to the program -->
+<body onload="main(document.getElementById('graphContainer'))">
+
+	<!-- Creates a container for the graph with a grid wallpaper -->
+		<div id="graphContainer" class="firstc">
+
+		</div>
+	<div>
+		<button onclick="myFunction()" >New Container</button>
+
+		 <script>
+		//  var array= [];
+		  function myFunction() {
+			// var para = document.getElementById("graphContainer");
+       var nameOfContainer = prompt("Enter the name of the container", "");
+    // if (person != null) {
+    //     document.getElementById("demo").innerHTML =
+    //     "Hello " + person + "! How are you today?";
+    // }
+
+
+			//
+			var para2 = document.createElement("div");
+			//
+
+
+			para2.setAttribute("id",nameOfContainer);
+			para2.setAttribute("class", "firstc");
+			// para.appendChild(para2);
+			document.body.appendChild(para2);
+
+			main(document.getElementById(nameOfContainer));
+
+		}
+		</script>
+
+  </div>
+</body>
+</html>

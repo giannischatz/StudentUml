@@ -1,5 +1,90 @@
-<html>
-	<head>
-		<title>StudentUml</title>	
-	</head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>CoolUmlWebpage</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <link rel="stylesheet" href="assets/css/sidebar.css">
+  <script src="javascript/IconHandler.js"></script>
+
+
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <a class="navbar-brand" href="#">Navbar</a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" id="navbarSupportedContent">
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item active">
+        <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">Link</a>
+      </li>
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          Dropdown
+        </a>
+        <!-- <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+          <a class="dropdown-item" href="#">Action</a>
+          <a class="dropdown-item" href="#">Another action</a>
+          <div class="dropdown-divider"></div>
+          <a class="dropdown-item" href="#">Something else here</a>
+        </div> -->
+      </li>
+      <li class="nav-item">
+        <a class="nav-link " onclick="openNav()" href="#">Sidebar</a>
+        <!-- <span style="font-size:30px;cursor:pointer" onclick="openNav()">Sidebar</span> -->
+      </li>
+    </ul>
+    
+  </div>
+</nav>
+
+	<div id="sidebarContainer"
+		style="position:absolute;overflow:hidden;top:55px;left:0px;bottom:0px;max-width:250px;width:250px;padding-top:10px;padding-left:4px;background-image:url('assets/images/sidebar.gif');">
+	</div>
+
+	<!-- Creates a container for the graph -->
+	<div id="graphContainer"
+		style="position:absolute;overflow:hidden;top:55px;left:250px;bottom:36px;right:0px;background-image:url('assets/images/grid.gif');cursor:default;">
+	</div>
+
+
+<div id="mySidenav" class="sidenav">
+  <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+  <a href="http://www.jgraph.com" target="_blank" ></a>
+					<!-- 'images/icons48/earth.png' -->
+  
+  <!-- <a href="#">About</a>
+  <a href="#">Services</a>
+  <a href="#">Clients</a>
+  <a href="#">Contact</a> -->
+</div>
+
+<!-- <span style="font-size:30px;cursor:pointer" onclick="openNav()">&#9776; open</span> -->
+
+<script>
+function openNav() {
+    document.getElementById("mySidenav").style.width = "250px";
+    addSidebarIcon(document.getElementById('mySidenav'));
+}
+
+function closeNav() {
+    document.getElementById("mySidenav").style.width = "0";
+}
+
+function removeIcon(){
+}
+</script>
+
+</div>   
+</body>
 </html>
