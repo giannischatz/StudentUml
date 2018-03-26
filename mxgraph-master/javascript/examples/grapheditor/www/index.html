@@ -52,9 +52,111 @@
 	<script type="text/javascript" src="js/Shapes.js"></script>
 	<script type="text/javascript" src="js/Actions.js"></script>
 	<script type="text/javascript" src="js/Menus.js"></script>
-	<script type="text/javascript" src="js/Toolbar.js"></script>
+	<script type="text/javascript" src="js/Toolbar.js"></script> 
 	<script type="text/javascript" src="js/Dialogs.js"></script>
-        <script type="text/javascript" src="js/Tabbar.js"></script>
+	<script>
+
+		 var newButton = null;
+
+		  function myFunction() {
+
+
+
+       var nameOfContainer = prompt("Enter the name of the container", "");
+
+
+
+			 if (nameOfContainer == '' || nameOfContainer == null)
+
+			 	return;
+
+			 else
+
+			 	{
+
+					switchToNewTab();
+
+					createContainer(nameOfContainer);
+
+					createTabLink(nameOfContainer);
+
+					main(document.getElementById(nameOfContainer));
+
+				}
+
+
+
+		}
+
+
+
+		function createContainer(name) {
+
+			var para2 = document.createElement("div");
+
+			para2.setAttribute("id",name);
+
+			para2.setAttribute("class", "firstc");
+
+			document.body.appendChild(para2);
+
+		}
+
+
+
+		function createTabLink(name){
+
+			var id = name + "Btn";
+
+			newButton = document.createElement("button");
+
+			newButton.setAttribute('class', 'tablink');
+
+			newButton.setAttribute('id',id);
+
+			newButton.innerHTML = '' + name ;
+
+
+
+			var btn = document.getElementById('bar');
+
+			btn.appendChild(newButton);
+
+
+
+			document.getElementById(id).addEventListener('click', function(){
+
+				console.log(id);
+
+				switchToNewTab();
+
+				var btn = document.getElementById(id);
+
+				document.getElementById(btn.innerHTML).style.display = 'block';
+
+			}, true);
+
+		}
+
+
+
+		function switchToNewTab(tablinks){
+
+			var i, tabcontent, tablinks;
+
+			tabcontent = document.getElementsByClassName("firstc");
+
+			for (i = 0; i < tabcontent.length; i++) {
+
+				tabcontent[i].style.display = "none";
+
+			}
+
+		}
+
+
+
+		</script>
 </head>
 <body class="geEditor">
 	<script type="text/javascript">
