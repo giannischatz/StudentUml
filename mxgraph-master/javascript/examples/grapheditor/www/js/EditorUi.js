@@ -123,7 +123,11 @@ EditorUi = function(editor, container, lightbox)
 	}
 
 	// Contains the main graph instance inside the given panel
+		console.log("start  before graph container")
+		console.log(graph.container)
 	graph.init(this.diagramContainer);
+	console.log("start after graph container")
+		console.log(graph.container)
 
     // Improves line wrapping for in-place editor
     if (mxClient.IS_SVG && graph.view.getDrawPane() != null)
@@ -2978,6 +2982,7 @@ EditorUi.prototype.createDivs = function()
 	this.sidebarContainer = this.createDiv('geSidebarContainer');
 	this.formatContainer = this.createDiv('geSidebarContainer geFormatContainer');
 	this.diagramContainer = this.createDiv('geDiagramContainer');
+	this.diagramContainer.setAttribute("id","id1")
 	this.footerContainer = this.createDiv('geFooterContainer');
 	this.hsplit = this.createDiv('geHsplit');
 	this.hsplit.setAttribute('title', mxResources.get('collapseExpand'));
@@ -3453,10 +3458,81 @@ EditorUi.prototype.saveFile = function(forceDialog)
 // Creating a new diagram on button clicked
 EditorUi.prototype.newDiagram = function()
 {
-	console.log("button clicked EditorUi.newDiagram");
+	var nameOfContainer = prompt("Enter the name of the container", "");
+	console.log("nameOfContainer: " + nameOfContainer);
+			 if (nameOfContainer == '' || nameOfContainer == null)
+
+			 	return;
+
+			 else
+
+			 	{
+					this.switchToNewTab();
+
+					this.createContainer(nameOfContainer);
+
+					this.createTabLink(nameOfContainer);
+
+				}
 }
 
+EditorUi.prototype.createContainer = function(name) {
+			console.log("Createcontainer name: " + name);
+			var containerNew = this.createDiv('geDiagramContainer');
+			containerNew.setAttribute("id",name)
+//			containerNew.setAttribute("class", "geDiagramContainer geDiagramBackdrop");
+			this.editor.graph.init(containerNew);
+			console.log(this.editor.graph.container)
+//			document.body.appendChild(para2);
 
+		}
+EditorUi.prototype.createTabLink = function(name){
+
+			var id = name + "Btn";
+
+			newButton = document.createElement("button");
+
+			newButton.setAttribute('class', 'tablink');
+
+			newButton.setAttribute('id',id);
+
+			newButton.innerHTML = '' + name ;
+
+
+
+			var btn = document.getElementById('bar');
+
+			btn.appendChild(newButton);
+
+
+
+			document.getElementById(id).addEventListener('click', function(){
+
+				console.log(id);
+
+				switchToNewTab();
+
+				var btn = document.getElementById(id);
+
+				document.getElementById(btn.innerHTML).style.display = 'block';
+
+			}, true);
+
+		}
+
+EditorUi.prototype.switchToNewTab = function(){
+			console.log("switch to new tab")
+			var i, tabcontent;
+
+			tabcontent = document.getElementsByClassName("geDiagramContainer geDiagramBackdrop");
+
+			for (i = 0; i < tabcontent.length; i++) {
+
+				tabcontent[i].style.display = "none";
+
+			}
+
+		}
 /**
  * Saves the current graph under the given filename.
  */

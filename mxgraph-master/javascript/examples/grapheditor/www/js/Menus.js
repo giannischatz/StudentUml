@@ -1160,6 +1160,8 @@ function Menubar(editorUi, container)
 {
 	this.editorUi = editorUi;
 	this.container = container;
+	this.container.setAttribute('id',"bar");
+	console.log("container: " + container.id)
 };
 
 /**
