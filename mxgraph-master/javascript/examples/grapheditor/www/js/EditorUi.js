@@ -14,7 +14,6 @@ EditorUi = function(editor, container, lightbox)
 	
 	var graph = this.editor.graph;
 	graph.lightbox = lightbox;
-
 	// Pre-fetches submenu image or replaces with embedded image if supported
 	if (mxClient.IS_SVG)
 	{
@@ -123,12 +122,8 @@ EditorUi = function(editor, container, lightbox)
 	}
 
 	// Contains the main graph instance inside the given panel
-		console.log("start  before graph container")
-		console.log(graph.container)
 	graph.init(this.diagramContainer);
-	console.log("start after graph container")
-		console.log(graph.container)
-
+	console.log(this.diagramContainer);
     // Improves line wrapping for in-place editor
     if (mxClient.IS_SVG && graph.view.getDrawPane() != null)
     {
@@ -3470,7 +3465,10 @@ EditorUi.prototype.newDiagram = function()
 					this.switchToNewTab();
 
 					this.createContainer(nameOfContainer);
-
+					console.log("graph:")
+					console.log(this.editor.graph)
+					console.log("container: ")
+					console.log(this.container)
 					this.createTabLink(nameOfContainer);
 
 				}
@@ -3478,15 +3476,121 @@ EditorUi.prototype.newDiagram = function()
 
 EditorUi.prototype.createContainer = function(name) {
 			console.log("Createcontainer name: " + name);
-			var containerNew = this.createDiv('geDiagramContainer');
-			containerNew.setAttribute("id",name)
-//			containerNew.setAttribute("class", "geDiagramContainer geDiagramBackdrop");
-			this.editor.graph.init(containerNew);
+			this.diagramContainer = this.createDiv('geDiagramContainer');
+			this.diagramContainer.setAttribute("id",name)
+			this.diagramContainer.setAttribute("class", "geDiagramContainer geDiagramBackdrop");
+			this.diagramContainer.style.right = ((this.format != null) ? this.formatWidth : 0) + 'px';
+			this.container.appendChild(this.diagramContainer);
+
+			//refresh()
+			this.refresh();
+			/*var w = this.container.clientWidth;
+			var h = this.container.clientHeight;
+			var effHsplitPosition = Math.max(0, Math.min(this.hsplitPosition, w - this.splitSize - 20));
+			var fw = (this.format != null) ? this.formatWidth : 0;
+			var off = mxUtils.getOffset(containerNew);
+			var th = 0;
+
+			var quirks = mxClient.IS_IE && (document.documentMode == null || document.documentMode == 5);
+			console.log("hsplit:")
+			console.log(this.hsplit.parentNode)
+			console.log("effHslip:")
+			console.log(effHsplitPosition)
+			console.log("spplitSize")
+			console.log(this.splitSize)
+			containerNew.style.left = (this.hsplit.parentNode != null) ? (effHsplitPosition + this.splitSize) + 'px' : '0px';
+			containerNew.style.top = this.sidebarContainer.style.top;
+
+			if (this.tabContainer != null)
+				{
+					this.tabContainer.style.left = containerNew.style.left;
+					th = this.tabContainer.clientHeight;
+				}
+			containerNew.style.width = (this.hsplit.parentNode != null) ? Math.max(0, w - effHsplitPosition - this.splitSize - fw) + 'px' : w + 'px';
+
+			if(quirks)
+			{
+				containerNew.style.width = (this.hsplit.parentNode != null) ? Math.max(0, w - effHsplitPosition - this.splitSize - fw) + 'px' : w + 'px';
+				if (this.tabContainer != null)
+				{
+					this.tabContainer.style.width = containerNew.style.width;
+				}
+
+				containerNew.style.height = diagramHeight + 'px';
+			}
+			else
+			{
+				containerNew.style.right = fw + 'px';
+
+				if(this.tabContainer != null)
+					this.tabContainer.style.right = containerNew.style.right;
+
+				containerNew.style.bottom = (this.footerHeight + off + th) + 'px';
+			}*/
+			//refresh() finish
+			var textEditing =  mxUtils.bind(this, function(evt)
+			{
+				if (evt == null)
+				{
+					evt = window.event;
+				}
+				
+				return (this.isSelectionAllowed(evt) || this.editor.graph.isEditing());
+			});
+
+			if (this.container == document.body){
+				this.diagramContainer.onselectstart = textEditing;
+				this.diagramContainer.onmousedown = textEditing;
+			}
+			var linkHandler = function(evt)
+		{
+			var source = mxEvent.getSource(evt);
+			
+			if (source.nodeName == 'A')
+			{
+				while (source != null)
+				{
+					if (source.className == 'geHint')
+					{
+						return true;
+					}
+					
+					source = source.parentNode;
+				}
+			}
+			
+			return textEditing(evt);
+			};
+				if (mxClient.IS_IE && (typeof(document.documentMode) === 'undefined' || document.documentMode < 9))
+			{
+				mxEvent.addListener(this.diagramContainer, 'contextmenu', linkHandler);
+			}
+			else
+			{
+				// Allows browser context menu outside of diagram and sidebar
+				this.diagramContainer.oncontextmenu = linkHandler;
+			}
+			this.editor.graph.init(this.diagramContainer);
 			console.log(this.editor.graph.container)
 //			document.body.appendChild(para2);
 
+			mxEvent.addListener(this.diagramContainer, 'mousemove', mxUtils.bind(this, function(evt)
+			{
+				var off = mxUtils.getOffset(this.diagramContainer);
+				
+				if (mxEvent.getClientX(evt) - off.x - this.diagramContainer.clientWidth > 0 ||
+					mxEvent.getClientY(evt) - off.y - this.diagramContainer.clientHeight > 0)
+				{
+					this.diagramContainer.setAttribute('title', mxResources.get('panTooltip'));
+				}
+				else
+				{
+					this.diagramContainer.removeAttribute('title');
+				}
+			}));
+
 		}
-EditorUi.prototype.createTabLink = function(name){
+		EditorUi.prototype.createTabLink = function(name){
 
 			var id = name + "Btn";
 
@@ -3503,31 +3607,33 @@ EditorUi.prototype.createTabLink = function(name){
 			var btn = document.getElementById('bar');
 
 			btn.appendChild(newButton);
-
-
-
 			document.getElementById(id).addEventListener('click', function(){
-
-				console.log(id);
-
-				switchToNewTab();
-
+				switchNewTab();
 				var btn = document.getElementById(id);
 
 				document.getElementById(btn.innerHTML).style.display = 'block';
-
-			}, true);
+				this.graph.container = document.getElementById(btn.innerHTML);
+			}, false);
 
 		}
 
-EditorUi.prototype.switchToNewTab = function(){
-			console.log("switch to new tab")
+		EditorUi.prototype.switchToNewTab = function(){
 			var i, tabcontent;
-
 			tabcontent = document.getElementsByClassName("geDiagramContainer geDiagramBackdrop");
 
 			for (i = 0; i < tabcontent.length; i++) {
+				tabcontent[i].style.display = "none";
 
+			}
+
+		}
+
+		switchNewTab = function(){
+			var i, tabcontent;
+			tabcontent = document.getElementsByClassName("geDiagramContainer geDiagramBackdrop");
+
+			for (i = 0; i < tabcontent.length; i++) {
+				console.log("i: " + i)
 				tabcontent[i].style.display = "none";
 
 			}
