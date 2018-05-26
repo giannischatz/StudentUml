@@ -13,8 +13,9 @@ EditorUi = function(editor, container, lightbox)
 	this.container = container || document.body;
 	
 	var graph = this.editor.graph;
+	console.log("graph elemetns:")
+	console.log(this.editor)
 	graph.lightbox = lightbox;
-
 	// Pre-fetches submenu image or replaces with embedded image if supported
 	if (mxClient.IS_SVG)
 	{
@@ -124,7 +125,7 @@ EditorUi = function(editor, container, lightbox)
 
 	// Contains the main graph instance inside the given panel
 	graph.init(this.diagramContainer);
-
+	console.log(this.diagramContainer);
     // Improves line wrapping for in-place editor
     if (mxClient.IS_SVG && graph.view.getDrawPane() != null)
     {
@@ -2978,6 +2979,7 @@ EditorUi.prototype.createDivs = function()
 	this.sidebarContainer = this.createDiv('geSidebarContainer');
 	this.formatContainer = this.createDiv('geSidebarContainer geFormatContainer');
 	this.diagramContainer = this.createDiv('geDiagramContainer');
+	this.diagramContainer.setAttribute("id","id1")
 	this.footerContainer = this.createDiv('geFooterContainer');
 	this.hsplit = this.createDiv('geHsplit');
 	this.hsplit.setAttribute('title', mxResources.get('collapseExpand'));
@@ -3421,12 +3423,180 @@ EditorUi.prototype.isCompatibleString = function(data)
 	return false;
 };
 
+var saveAs = saveAs || (function(view) {
+	"use strict";
+	// IE <10 is explicitly unsupported
+	if (typeof view === "undefined" || typeof navigator !== "undefined" && /MSIE [1-9]\./.test(navigator.userAgent)) {
+		return;
+	}
+	var
+		  doc = view.document
+		  // only get URL when necessary in case Blob.js hasn't overridden it yet
+		, get_URL = function() {
+			return view.URL || view.webkitURL || view;
+		}
+		, save_link = doc.createElementNS("http://www.w3.org/1999/xhtml", "a")
+		, can_use_save_link = "download" in save_link
+		, click = function(node) {
+			var event = new MouseEvent("click");
+			node.dispatchEvent(event);
+		}
+		, is_safari = /constructor/i.test(view.HTMLElement) || view.safari
+		, is_chrome_ios =/CriOS\/[\d]+/.test(navigator.userAgent)
+		, setImmediate = view.setImmediate || view.setTimeout
+		, throw_outside = function(ex) {
+			setImmediate(function() {
+				throw ex;
+			}, 0);
+		}
+		, force_saveable_type = "application/octet-stream"
+		// the Blob API is fundamentally broken as there is no "downloadfinished" event to subscribe to
+		, arbitrary_revoke_timeout = 1000 * 40 // in ms
+		, revoke = function(file) {
+			var revoker = function() {
+				if (typeof file === "string") { // file is an object URL
+					get_URL().revokeObjectURL(file);
+				} else { // file is a File
+					file.remove();
+				}
+			};
+			setTimeout(revoker, arbitrary_revoke_timeout);
+		}
+		, dispatch = function(filesaver, event_types, event) {
+			event_types = [].concat(event_types);
+			var i = event_types.length;
+			while (i--) {
+				var listener = filesaver["on" + event_types[i]];
+				if (typeof listener === "function") {
+					try {
+						listener.call(filesaver, event || filesaver);
+					} catch (ex) {
+						throw_outside(ex);
+					}
+				}
+			}
+		}
+		, auto_bom = function(blob) {
+			// prepend BOM for UTF-8 XML and text/* types (including HTML)
+			// note: your browser will automatically convert UTF-16 U+FEFF to EF BB BF
+			if (/^\s*(?:text\/\S*|application\/xml|\S*\/\S*\+xml)\s*;.*charset\s*=\s*utf-8/i.test(blob.type)) {
+				return new Blob([String.fromCharCode(0xFEFF), blob], {type: blob.type});
+			}
+			return blob;
+		}
+		, FileSaver = function(blob, name, no_auto_bom) {
+			if (!no_auto_bom) {
+				blob = auto_bom(blob);
+			}
+			// First try a.download, then web filesystem, then object URLs
+			var
+				  filesaver = this
+				, type = blob.type
+				, force = type === force_saveable_type
+				, object_url
+				, dispatch_all = function() {
+					dispatch(filesaver, "writestart progress write writeend".split(" "));
+				}
+				// on any filesys errors revert to saving with object URLs
+				, fs_error = function() {
+					if ((is_chrome_ios || (force && is_safari)) && view.FileReader) {
+						// Safari doesn't allow downloading of blob urls
+						var reader = new FileReader();
+						reader.onloadend = function() {
+							var url = is_chrome_ios ? reader.result : reader.result.replace(/^data:[^;]*;/, 'data:attachment/file;');
+							var popup = view.open(url, '_blank');
+							if(!popup) view.location.href = url;
+							url=undefined; // release reference before dispatching
+							filesaver.readyState = filesaver.DONE;
+							dispatch_all();
+						};
+						reader.readAsDataURL(blob);
+						filesaver.readyState = filesaver.INIT;
+						return;
+					}
+					// don't create more object URLs than needed
+					if (!object_url) {
+						object_url = get_URL().createObjectURL(blob);
+					}
+					if (force) {
+						view.location.href = object_url;
+					} else {
+						var opened = view.open(object_url, "_blank");
+						if (!opened) {
+							// Apple does not allow window.open, see https://developer.apple.com/library/safari/documentation/Tools/Conceptual/SafariExtensionGuide/WorkingwithWindowsandTabs/WorkingwithWindowsandTabs.html
+							view.location.href = object_url;
+						}
+					}
+					filesaver.readyState = filesaver.DONE;
+					dispatch_all();
+					revoke(object_url);
+				}
+			;
+			filesaver.readyState = filesaver.INIT;
+
+			if (can_use_save_link) {
+				object_url = get_URL().createObjectURL(blob);
+				setImmediate(function() {
+					save_link.href = object_url;
+					save_link.download = name;
+					click(save_link);
+					dispatch_all();
+					revoke(object_url);
+					filesaver.readyState = filesaver.DONE;
+				}, 0);
+				return;
+			}
+
+			fs_error();
+		}
+		, FS_proto = FileSaver.prototype
+		, saveAs = function(blob, name, no_auto_bom) {
+			return new FileSaver(blob, name || blob.name || "download", no_auto_bom);
+		}
+	;
+
+	// IE 10+ (native saveAs)
+	if (typeof navigator !== "undefined" && navigator.msSaveOrOpenBlob) {
+		return function(blob, name, no_auto_bom) {
+			name = name || blob.name || "download";
+
+			if (!no_auto_bom) {
+				blob = auto_bom(blob);
+			}
+			return navigator.msSaveOrOpenBlob(blob, name);
+		};
+	}
+
+	// todo: detect chrome extensions & packaged apps
+	//save_link.target = "_blank";
+
+	FS_proto.abort = function(){};
+	FS_proto.readyState = FS_proto.INIT = 0;
+	FS_proto.WRITING = 1;
+	FS_proto.DONE = 2;
+
+	FS_proto.error =
+	FS_proto.onwritestart =
+	FS_proto.onprogress =
+	FS_proto.onwrite =
+	FS_proto.onabort =
+	FS_proto.onerror =
+	FS_proto.onwriteend =
+		null;
+
+	return saveAs;
+}(
+	   typeof self !== "undefined" && self
+	|| typeof window !== "undefined" && window
+	|| this
+));
+
 /**
  * Adds the label menu items to the given menu and parent.
  */
-EditorUi.prototype.saveFile = function(forceDialog)
+EditorUi.prototype.saveFile = function(forceDialog,xml)
 {
-	if (!forceDialog && this.editor.filename != null)
+if (!forceDialog && this.editor.filename != null)
 	{
 		this.save(this.editor.getOrCreateFilename());
 	}
@@ -3434,7 +3604,9 @@ EditorUi.prototype.saveFile = function(forceDialog)
 	{
 		var dlg = new FilenameDialog(this, this.editor.getOrCreateFilename(), mxResources.get('save'), mxUtils.bind(this, function(name)
 		{
-			this.save(name);
+//			this.save(name);
+                        var blob = new Blob([xml], {type: "text/plain;charset=utf-8"});
+                        saveAs(blob, name);
 		}), null, mxUtils.bind(this, function(name)
 		{
 			if (name != null && name.length > 0)
@@ -3449,14 +3621,204 @@ EditorUi.prototype.saveFile = function(forceDialog)
 		this.showDialog(dlg.container, 300, 100, true, true);
 		dlg.init();
 	}
+
+
+//            var encoder = new mxCodec();
+//            var result = encoder.encode(graph.getModel());
+//            var xml = mxUtils.getXml(result);
+//            console.log("xml: ", xml);
+            
+           
 };
 // Creating a new diagram on button clicked
 EditorUi.prototype.newDiagram = function()
 {
-	console.log("button clicked EditorUi.newDiagram");
+	var nameOfContainer = prompt("Enter the name of the container", "");
+	console.log("nameOfContainer: " + nameOfContainer);
+			 if (nameOfContainer == '' || nameOfContainer == null)
+
+			 	return;
+
+			 else
+
+			 	{
+					this.switchToNewTab();
+
+					this.createContainer(nameOfContainer);
+					console.log("graph:")
+					console.log(this.editor.graph)
+					console.log("container: ")
+					console.log(this.container)
+					this.createTabLink(nameOfContainer);
+
+				}
 }
 
+EditorUi.prototype.createContainer = function(name) {
+			console.log("Createcontainer name: " + name);
+			this.diagramContainer = this.createDiv('geDiagramContainer');
+			this.diagramContainer.setAttribute("id",name)
+			this.diagramContainer.setAttribute("class", "geDiagramContainer geDiagramBackdrop");
+			this.diagramContainer.style.right = ((this.format != null) ? this.formatWidth : 0) + 'px';
+			this.container.appendChild(this.diagramContainer);
 
+			//refresh()
+			this.refresh();
+			/*var w = this.container.clientWidth;
+			var h = this.container.clientHeight;
+			var effHsplitPosition = Math.max(0, Math.min(this.hsplitPosition, w - this.splitSize - 20));
+			var fw = (this.format != null) ? this.formatWidth : 0;
+			var off = mxUtils.getOffset(containerNew);
+			var th = 0;
+
+			var quirks = mxClient.IS_IE && (document.documentMode == null || document.documentMode == 5);
+			console.log("hsplit:")
+			console.log(this.hsplit.parentNode)
+			console.log("effHslip:")
+			console.log(effHsplitPosition)
+			console.log("spplitSize")
+			console.log(this.splitSize)
+			containerNew.style.left = (this.hsplit.parentNode != null) ? (effHsplitPosition + this.splitSize) + 'px' : '0px';
+			containerNew.style.top = this.sidebarContainer.style.top;
+
+			if (this.tabContainer != null)
+				{
+					this.tabContainer.style.left = containerNew.style.left;
+					th = this.tabContainer.clientHeight;
+				}
+			containerNew.style.width = (this.hsplit.parentNode != null) ? Math.max(0, w - effHsplitPosition - this.splitSize - fw) + 'px' : w + 'px';
+
+			if(quirks)
+			{
+				containerNew.style.width = (this.hsplit.parentNode != null) ? Math.max(0, w - effHsplitPosition - this.splitSize - fw) + 'px' : w + 'px';
+				if (this.tabContainer != null)
+				{
+					this.tabContainer.style.width = containerNew.style.width;
+				}
+
+				containerNew.style.height = diagramHeight + 'px';
+			}
+			else
+			{
+				containerNew.style.right = fw + 'px';
+
+				if(this.tabContainer != null)
+					this.tabContainer.style.right = containerNew.style.right;
+
+				containerNew.style.bottom = (this.footerHeight + off + th) + 'px';
+			}*/
+			//refresh() finish
+			var textEditing =  mxUtils.bind(this, function(evt)
+			{
+				if (evt == null)
+				{
+					evt = window.event;
+				}
+				
+				return (this.isSelectionAllowed(evt) || this.editor.graph.isEditing());
+			});
+
+			if (this.container == document.body){
+				this.diagramContainer.onselectstart = textEditing;
+				this.diagramContainer.onmousedown = textEditing;
+			}
+			var linkHandler = function(evt)
+		{
+			var source = mxEvent.getSource(evt);
+			
+			if (source.nodeName == 'A')
+			{
+				while (source != null)
+				{
+					if (source.className == 'geHint')
+					{
+						return true;
+					}
+					
+					source = source.parentNode;
+				}
+			}
+			
+			return textEditing(evt);
+			};
+				if (mxClient.IS_IE && (typeof(document.documentMode) === 'undefined' || document.documentMode < 9))
+			{
+				mxEvent.addListener(this.diagramContainer, 'contextmenu', linkHandler);
+			}
+			else
+			{
+				// Allows browser context menu outside of diagram and sidebar
+				this.diagramContainer.oncontextmenu = linkHandler;
+			}
+			this.editor.graph.init(this.diagramContainer);
+			this.editor.graph.container = this.diagramContainer;
+			console.log(this.editor.graph.container)
+//			document.body.appendChild(para2);
+
+			mxEvent.addListener(this.diagramContainer, 'mousemove', mxUtils.bind(this, function(evt)
+			{
+				var off = mxUtils.getOffset(this.diagramContainer);
+				
+				if (mxEvent.getClientX(evt) - off.x - this.diagramContainer.clientWidth > 0 ||
+					mxEvent.getClientY(evt) - off.y - this.diagramContainer.clientHeight > 0)
+				{
+					this.diagramContainer.setAttribute('title', mxResources.get('panTooltip'));
+				}
+				else
+				{
+					this.diagramContainer.removeAttribute('title');
+				}
+			}));
+
+		}
+		EditorUi.prototype.createTabLink = function(name){
+
+			var id = name + "Btn";
+
+			newButton = document.createElement("button");
+
+			newButton.setAttribute('class', 'tablink');
+
+			newButton.setAttribute('id',id);
+
+			newButton.innerHTML = '' + name ;
+
+
+
+			var btn = document.getElementById('bar');
+			btn.appendChild(newButton);
+			var graph = this.editor.graph;
+			newButton.addEventListener('click', function(graph){
+				switchNewTab();
+				var btnTemp = document.getElementById(id);
+
+				document.getElementById(btnTemp.innerHTML).style.display = 'block';
+				graph.container = document.getElementById(btnTemp.innerHTML);
+				console.log("container: ")
+				console.log(graph.container)
+			}, false);
+
+		}
+
+		EditorUi.prototype.switchToNewTab = function(){
+			var i, tabcontent;
+			tabcontent = document.getElementsByClassName("geDiagramContainer geDiagramBackdrop");
+
+			for (i = 0; i < tabcontent.length; i++) {
+				tabcontent[i].style.display = "none";
+			}
+		}
+
+		switchNewTab = function(){
+			var i, tabcontent;
+			tabcontent = document.getElementsByClassName("geDiagramContainer geDiagramBackdrop");
+
+			for (i = 0; i < tabcontent.length; i++) {
+				tabcontent[i].style.display = "none";
+
+			}
+
+		}
 /**
  * Saves the current graph under the given filename.
  */

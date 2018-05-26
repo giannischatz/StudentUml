@@ -85,6 +85,7 @@ mxCodecRegistry.register(function()
 	 */
 	codec.afterEncode = function(enc, obj, node)
 	{
+				console.log("cellCodec: ", "true")
 		if (obj.value != null && obj.value.nodeType == mxConstants.NODETYPE_ELEMENT)
 		{
 			// Wraps the graphical annotation up in the user object (inversion)

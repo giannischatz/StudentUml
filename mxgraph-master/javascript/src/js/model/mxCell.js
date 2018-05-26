@@ -76,6 +76,33 @@ function mxCell(value, geometry, style)
 	}
 };
 
+// function mxCell(value, geometry, style, umlType){
+// 	console.log("enter mxCell 1");
+// 	this.value = value;
+// 	this.setGeometry(geometry);
+// 	this.setStyle(style);
+// 	this.umlType = umlType;
+// 	if (this.onInit != null)
+// 	{
+// 		this.onInit();
+// 	}
+// };
+function mxCell(value, geometry, style, umlType, elementType){
+	console.log("enter mxCell 2");
+	this.value = value;
+	this.setGeometry(geometry);
+	this.setStyle(style);
+	this.umlType = umlType;
+	this.elementType = elementType;
+	if (this.onInit != null)
+	{
+		this.onInit();
+	}
+};
+
+mxCell.prototype.elementType = null;
+
+mxCell.prototype.umlType = null;
 /**
  * Variable: id
  *
@@ -244,6 +271,24 @@ mxCell.prototype.valueChanged = function(newValue)
 	
 	return previous;
 };
+
+
+mxCell.prototype.getElementType = function(){
+	return this.elementType;
+};
+
+mxCell.prototype.ElementType = function(elementType){
+	this.elementType = elementType;
+};
+
+mxCell.prototype.getUmlType = function(){
+	return this.umlType;
+};
+
+mxCell.prototype.UmlType = function(umlType){
+	this.umlType = umlType;
+};
+
 
 /**
  * Function: getGeometry

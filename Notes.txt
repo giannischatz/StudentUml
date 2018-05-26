@@ -1,0 +1,2 @@
+for the update of the names of the components of the class go to Graph.js and search for the
+fucnction cellLabelChanged.

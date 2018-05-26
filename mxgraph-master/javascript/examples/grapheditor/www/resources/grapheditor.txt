@@ -72,6 +72,7 @@ custom=Custom
 cut=Cut
 dashed=Dashed
 dcd=DCD
+validation=Validation
 ssd=SSD
 decreaseIndent=Decrease Indent
 default=Default

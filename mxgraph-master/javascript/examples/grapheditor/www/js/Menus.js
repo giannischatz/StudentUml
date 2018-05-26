@@ -472,7 +472,7 @@ Menus.prototype.init = function()
 	})));
 	this.put('diagram', new Menu(mxUtils.bind(this, function(menu, parent)
 	{
-		this.addMenuItems(menu, ['dcd', 'ssd', '-', 'save', 'saveAs', '-', 'import', 'export', '-', 'pageSetup', 'print'], parent);
+		this.addMenuItems(menu, ['validation','dcd', 'ssd', '-', 'save', 'saveAs', '-', 'import', 'export', '-', 'pageSetup', 'print'], parent);
 	})));
 	//this.put('new Diagram', new Menu(mxUtils.bind(this, function(menu,parent)
 	//{
@@ -1160,6 +1160,8 @@ function Menubar(editorUi, container)
 {
 	this.editorUi = editorUi;
 	this.container = container;
+	this.container.setAttribute('id',"bar");
+	console.log("container: " + container.id)
 };
 
 /**
