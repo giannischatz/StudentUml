@@ -3422,7 +3422,6 @@ EditorUi.prototype.isCompatibleString = function(data)
 {
 	return false;
 };
-
 var saveAs = saveAs || (function(view) {
 	"use strict";
 	// IE <10 is explicitly unsupported
@@ -3596,9 +3595,11 @@ var saveAs = saveAs || (function(view) {
  */
 EditorUi.prototype.saveFile = function(forceDialog,xml)
 {
-if (!forceDialog && this.editor.filename != null)
+if (!forceDialog )
 	{
 		this.save(this.editor.getOrCreateFilename());
+                
+                
 	}
 	else
 	{
